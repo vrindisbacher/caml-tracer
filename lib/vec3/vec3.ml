@@ -1,54 +1,49 @@
 
 (* unified triples *)
-type 'a triple = { x: 'a; y: 'a; z: 'a}
+type triple = { x: float; y: float; z: float}
 
 (* polymorphic methods on triples *)
-let stream_triple (t : 'a triple) (acc : string) (f : 'a -> string) : string = acc ^ f t.x ^ " " ^ f t.y ^ " " ^ f t.z ^ "\n"
+let stream_triple t acc = acc ^ string_of_float t.x ^ " " ^ string_of_float t.y ^ " " ^ string_of_float t.z ^ "\n"
 
 (* for adding, subtracting and multiplying triples *)
-let manip_triple_inline (t1 : 'a triple) (t2 : 'a triple) (f : 'a -> 'a -> 'a) : 'a triple = { x = f t1.x t2.x; y = f t1.y t2.y; z = f t1.z t2.z}
+let inv_triple t  = {x = -. t.x; y = -. t.y; z = -. t.z}
 
-let mul_triple_by_const (t : 'a triple) (c : 'a) (f: 'a -> 'a -> 'a) : 'a triple = {x = f c t.x; y = f c t.y; z = f c t.z}
+let manip_triple_inline t1 t2 f = { x = f t1.x t2.x; y = f t1.y t2.y; z = f t1.z t2.z}
 
-let div_triple_by_const (t : 'a triple) (c : 'a) (f: 'a -> 'a -> 'a) : 'a triple = mul_triple_by_const t c (fun a b -> f a b)
+let mul_triple_by_const t c = {x = c *. t.x; y = c *. t.y; z = c *. t.z}
 
-let dot_product (t1 : 'a triple) (t2 : 'a triple) (f1 : 'a -> 'a -> 'a) (f2 : 'a -> 'a -> 'a) : 'a  = f2 (f1 t1.x t2.x) (f2 (f1 t1.y t2.y) (f1 t1.z t2.z)) 
-
-let cross_product (t1 : 'a triple) (t2 : 'a triple) f1 f2 = {x = f2 (f1 t1.y t2.z) (f1 t1.z t2.y); y = f2 (f1 t1.z t2.x) (f1 t1.x t2.z); z =f2 (f1 t1.x t2.y) (f1 t1.y t2.x);}
-
-let triple_length (t : 'a triple) (c : 'a) f = div_triple_by_const t c f 
-
-
-(* custom ops on triples *)
-
-(* add mul and sub triples *)
-let (!+) el1 el2 = manip_triple_inline el1 el2 (+)
-let (!*) el1 el2 = manip_triple_inline el1 el2 (fun a b -> a * b)
-let (!-) el1 el2 = manip_triple_inline el1 el2 (-)
+(* notation *)
+let (--.) v = inv_triple v 
 
 let (!+.) el1 el2 = manip_triple_inline el1 el2 (+.)
 let (!*.) el1 el2 = manip_triple_inline el1 el2 (fun a b -> a *. b)
 let (!-.) el1 el2 = manip_triple_inline el1 el2 (-.)
+let ($*.) el1 c = mul_triple_by_const el1 c 
 
-(* mul by a constant *)
-let ($*) c el1 = mul_triple_by_const el1 c (fun a b -> a * b)
-let ($*$) el1 c = mul_triple_by_const el1 c (fun a b -> a * b)
-let ($*.) c el1 = mul_triple_by_const el1 c (fun a b -> a *. b)
-let ($*.$) el1 c = mul_triple_by_const el1 c (fun a b -> a *. b)
+(* division *)
+let div_triple_by_const t c = t $*. (1. /. c) 
 
-(* div by a constant *)
-let ($/) el1 c = div_triple_by_const el1 (1 / c) (/)
-let ($/.) el1 c = div_triple_by_const el1 (1. /. c) (/.)
+(* notation *)
+let ($/.) el1 c = div_triple_by_const el1 c
 
-(* dot product *)
-let (~*) el1 el2 = dot_product el1 el2 (fun a b -> a * b) (+)
-let (~*.) el1 el2 = dot_product el1 el2 (fun a b -> a *. b) (+.)
+let dot_product t1 t2  = (t1.x *. t2.x) +. (t1.y *. t2.y) +. (t1.z *. t2.z)
 
-(* cross product *)
-let (%*) el1 el2 = cross_product el1 el2 (-) (fun a b -> a * b)
-let (%*.) el1 el2 = cross_product el1 el2 (-.) (fun a b -> a *. b)
+(* notation *)
+let (~*.) el1 el2 = dot_product el1 el2
+
+let cross_product t1 t2 = {x = (t1.y -. t2.z) *. (t1.z -. t2.y); y = (t1.z -. t2.x) *. (t1.x -. t2.z); z = (t1.x -. t2.y) *. (t1.y -. t2.x);}
+
+(* notation *)
+let (%*.) el1 el2 = cross_product el1 el2
+
+let triple_length_sq t = t.x**2. +. t.y**2. +. t.z**2.
+
+let triple_length t = sqrt (triple_length_sq t)
+
+let unit_vector t = t $/. (triple_length t) 
+
 
 (* useful notation for int cast *)
 let (^*) (a : float) (b : float) = string_of_int (int_of_float (a *. b))
 
-let write_color (pixel_color : float triple) = (255.999 ^* pixel_color.x) ^ " " ^ (255.999 ^* pixel_color.y) ^ " " ^ (255.99 ^* pixel_color.z) ^ "\n"
+let write_color pixel_color = (255.999 ^* pixel_color.x) ^ " " ^ (255.999 ^* pixel_color.y) ^ " " ^ (255.99 ^* pixel_color.z) ^ "\n"
