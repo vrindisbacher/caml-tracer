@@ -1,4 +1,4 @@
 (executable
  (public_name ray_tracer)
  (name main)
- (libraries ray_tracer core vec3))
+ (libraries ray_tracer core vec3 ray))
